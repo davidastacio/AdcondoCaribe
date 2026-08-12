@@ -1,0 +1,1 @@
+"use client";import {UserProfile} from "@/components/users/user-profile";import {useParams} from "next/navigation";export default function Page(){return <UserProfile id={useParams<{supervisorId:string}>().supervisorId} supervisor/>}

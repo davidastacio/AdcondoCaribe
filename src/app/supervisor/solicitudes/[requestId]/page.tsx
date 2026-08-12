@@ -1,0 +1,1 @@
+"use client";import { MaterialRequestDetail } from "@/components/inventory/request-detail";import { useParams } from "next/navigation";export default function Page(){const {requestId}=useParams<{requestId:string}>();return <MaterialRequestDetail id={requestId}/>}

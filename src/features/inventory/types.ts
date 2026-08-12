@@ -1,0 +1,9 @@
+export type InventoryCategory="CLEANING"|"HYGIENE"|"POOL"|"ELECTRICITY"|"MAINTENANCE"|"OTHER";
+export type InventoryStatus="AVAILABLE"|"LOW_STOCK"|"OUT_OF_STOCK"|"NOT_VERIFIED";
+export type MaterialRequestStatus="DRAFT"|"SUBMITTED"|"UNDER_REVIEW"|"APPROVED"|"REJECTED"|"PURCHASED"|"DELIVERED";
+export interface InventoryItem{id:string;name:string;category:InventoryCategory;defaultUnit:string;active:boolean}
+export interface InventoryPhoto{id:string;url:string;createdAt:string}
+export interface TowerInventory{id:string;towerId:string;towerName:string;towerCode:string;sector:string;inventoryItemId:string;itemName:string;category:InventoryCategory;quantity:number;recommendedQuantity:number;unit:string;status:InventoryStatus;location:string;observation?:string;photos:InventoryPhoto[];lastCheckedById?:string;lastCheckedBy?:string;lastCheckedAt?:string}
+export interface RequestItem{id:string;inventoryItemId:string;itemName:string;unit:string;currentQuantity:number;requestedQuantity:number;observation?:string;photos?:InventoryPhoto[]}
+export interface RequestUpdate{id:string;userId:string;userName:string;oldStatus?:MaterialRequestStatus;newStatus:MaterialRequestStatus;comment:string;createdAt:string}
+export interface MaterialRequest{id:string;code:string;towerId:string;towerName:string;towerCode:string;requestedById:string;requestedBy:string;status:MaterialRequestStatus;items:RequestItem[];generalObservation?:string;rejectionReason?:string;updates:RequestUpdate[];createdAt:string;updatedAt:string;approvedAt?:string;purchasedAt?:string;deliveredAt?:string}

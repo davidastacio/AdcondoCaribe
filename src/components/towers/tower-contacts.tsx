@@ -1,0 +1,2 @@
+import type {TowerContact} from "@/features/towers/types";import {Mail,Phone,UserRound} from "lucide-react";
+export function TowerContacts({contacts}:{contacts:TowerContact[]}){return <section className="card tower-info-card"><h2>Contactos de la torre</h2>{contacts.map(c=><article className="tower-contact" key={c.id}><span><UserRound/></span><div><small>{c.type}</small><b>{c.name}</b><p><Phone/>{c.phone} <Mail/>{c.email}</p></div></article>)}</section>}

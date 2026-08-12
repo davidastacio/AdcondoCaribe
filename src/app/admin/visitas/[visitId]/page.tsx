@@ -1,0 +1,1 @@
+"use client";import {VisitDetails} from "@/components/visits/visit-details";import {useParams} from "next/navigation";export default function Page(){return <VisitDetails id={useParams<{visitId:string}>().visitId}/>}

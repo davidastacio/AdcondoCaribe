@@ -1,0 +1,1 @@
+import {userStatusLabels} from "@/features/users/service";import type {UserStatus} from "@/features/users/types";export function UserStatusBadge({status}:{status:UserStatus}){return <span className={`user-status user-status--${status.toLowerCase()}`}>{userStatusLabels[status]}</span>}

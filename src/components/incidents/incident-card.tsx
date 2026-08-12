@@ -1,0 +1,5 @@
+import type { Incident } from "@/features/incidents/types";
+import { CalendarDays, ChevronRight, MapPin } from "lucide-react";
+import Link from "next/link";
+import { IncidentPriorityBadge, IncidentStatusBadge } from "./incident-badges";
+export function IncidentCard({incident,basePath="/supervisor/incidencias"}:{incident:Incident;basePath?:string}){const photo=incident.photos[0];return <Link className="incident-card" href={`${basePath}/${incident.id}`}><div className="incident-card__photo evidence-photo" data-seed={photo?.url.replace("mock-photo:","")??"general"}><IncidentPriorityBadge priority={incident.priority}/></div><div className="incident-card__body"><div><span className="incident-code">{incident.code}</span><IncidentStatusBadge status={incident.status}/></div><h3>{incident.title}</h3><p>{incident.description}</p><div className="incident-card__meta"><span><MapPin/>{incident.towerName} · {incident.area}</span><span><CalendarDays/>{new Date(incident.createdAt).toLocaleDateString("es-DO",{day:"numeric",month:"long",year:"numeric"})}</span></div></div><ChevronRight className="incident-card__arrow"/></Link>}

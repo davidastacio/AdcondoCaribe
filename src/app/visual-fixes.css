@@ -1,0 +1,13 @@
+/* Selectores específicos para evitar colisiones entre la landing y los módulos. */
+.hero .eyebrow { display: inline-flex; width: auto; }
+.sidebar nav { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.sidebar__logout { flex: 0 0 auto; }
+.admin-table > div > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 1400px) and (min-width: 801px) {
+  .kpi-grid--admin { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .hero .eyebrow { max-width: 100%; }
+}

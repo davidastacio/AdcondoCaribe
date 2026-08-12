@@ -1,0 +1,3 @@
+"use client";import {usePathname,useRouter,useSearchParams} from "next/navigation";
+const adminTabs=["resumen","visitas","incidencias","inventario","solicitudes","fotos","documentos","historial"] as const;const supervisorTabs=["resumen","visitas","incidencias","inventario","fotos"] as const;
+export function TowerTabs({role="admin"}:{role?:"admin"|"supervisor"}){const router=useRouter(),path=usePathname(),q=useSearchParams(),active=q.get("tab")??"resumen",tabs=role==="admin"?adminTabs:supervisorTabs;return <nav className="tower-tabs" aria-label="Secciones de la torre">{tabs.map(tab=><button key={tab} className={active===tab?"active":""} onClick={()=>router.push(`${path}?tab=${tab}`)}>{tab}</button>)}</nav>}

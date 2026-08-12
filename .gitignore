@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Next.js generated files
+.next/
+out/
+
+# Local and temporary files
+.tmp/
+tmp/
+*.log
+*.tsbuildinfo
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+
+# Testing and coverage
+coverage/
+playwright-report/
+test-results/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Deployment metadata
+.vercel/

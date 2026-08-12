@@ -1,0 +1,2 @@
+import type {TowerPhoto} from "@/features/towers/types";import {Camera} from "lucide-react";
+export function TowerPhotoGallery({photos}:{photos:TowerPhoto[]}){return <div className="tower-photo-grid">{photos.map((p,i)=><article key={p.id}><div className={`tower-photo-placeholder photo-tone-${i%4}`}><Camera/></div><b>{p.origin}</b><small>{new Date(p.date).toLocaleDateString("es-DO")} · {p.supervisor}</small></article>)}</div>}

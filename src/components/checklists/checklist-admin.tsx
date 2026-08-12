@@ -1,0 +1,19 @@
+"use client";
+import { addChecklistItem, addChecklistSection, createChecklistTemplate, listChecklistTemplates, moveChecklistItem, updateChecklistItem } from "@/features/checklists/service";
+import { ArrowDown, ArrowUp, CheckCircle2, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState } from "react";
+
+export function ChecklistAdmin() {
+  const [templates, setTemplates] = useState(listChecklistTemplates);
+  const [selectedId, setSelectedId] = useState(() => templates[0]?.id ?? "");
+  const refresh = () => setTemplates(listChecklistTemplates());
+  const selected = templates.find(x => x.id === selectedId) ?? templates[0];
+  const addTemplate = () => { const name = prompt("Nombre de la plantilla"); if (!name?.trim()) return; const created = createChecklistTemplate(name.trim()); refresh(); setSelectedId(created.id); };
+  const addSection = () => { const name = prompt("Nombre de la sección"); if (!selected || !name?.trim()) return; addChecklistSection(selected.id, name.trim()); refresh(); };
+  const addItem = (sectionId:string) => { const name = prompt("Nombre del elemento"); if (!selected || !name?.trim()) return; addChecklistItem(selected.id, sectionId, { name:name.trim(), required:true }); refresh(); };
+  return <div className="config-layout">
+    <aside className="panel config-nav"><div className="panel__head"><div><span className="panel-kicker">Plantillas</span><h2>Checklists</h2></div><button className="icon-action" onClick={addTemplate} aria-label="Crear plantilla"><Plus/></button></div>{templates.map(template=><button key={template.id} className={template.id===selected?.id?"active":""} onClick={()=>setSelectedId(template.id)}><strong>{template.name}</strong><small>Versión {template.version} · {template.sections.length} secciones</small></button>)}</aside>
+    <section className="config-main">{selected ? <><div className="dashboard-heading"><div><span className="mobile-overline">Configuración de inspección</span><h1>{selected.name}</h1><p>{selected.description} Los elementos utilizados se desactivan; no se eliminan.</p></div><button className="btn btn--primary" onClick={addSection}><Plus size={17}/> Nueva sección</button></div>
+      <div className="checklist-admin-sections">{selected.sections.sort((a,b)=>a.order-b.order).map(section=><article className="panel" key={section.id}><div className="panel__head"><div><span className="panel-kicker">Sección {section.order+1}</span><h2>{section.name}</h2></div><button className="btn btn--soft" onClick={()=>addItem(section.id)}><Plus size={15}/> Elemento</button></div><div className="checklist-admin-items">{section.items.sort((a,b)=>a.order-b.order).map((item,index)=><div key={item.id} className={!item.active?"inactive":""}><CheckCircle2 size={18}/><button className="item-copy" onClick={()=>{const name=prompt("Editar nombre",item.name);if(name?.trim()){updateChecklistItem(selected.id,section.id,item.id,{name:name.trim()});refresh()}}}><strong>{item.name}</strong><small>{item.description||"Sin descripción"} · {item.required?"Requerido":"Opcional"}</small></button><button className="icon-action" disabled={index===0} onClick={()=>{moveChecklistItem(selected.id,section.id,item.id,-1);refresh()}} aria-label="Subir"><ArrowUp/></button><button className="icon-action" disabled={index===section.items.length-1} onClick={()=>{moveChecklistItem(selected.id,section.id,item.id,1);refresh()}} aria-label="Bajar"><ArrowDown/></button><button className="icon-action" onClick={()=>{updateChecklistItem(selected.id,section.id,item.id,{active:!item.active});refresh()}} aria-label={item.active?"Desactivar":"Activar"}>{item.active?<ToggleRight/>:<ToggleLeft/>}</button></div>)}</div></article>)}</div></> : <section className="card empty-state"><h1>No hay plantillas</h1><button className="btn btn--primary" onClick={addTemplate}>Crear primera plantilla</button></section>}</section>
+  </div>;
+}

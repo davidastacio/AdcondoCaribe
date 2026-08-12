@@ -1,0 +1,2 @@
+import { AlertTriangle } from "lucide-react";
+export function IncidentButton({checked,onChange}:{checked:boolean;onChange:(checked:boolean)=>void}){return <label className={`incident-toggle ${checked?"active":""}`}><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/><AlertTriangle/><span><strong>Crear incidencia</strong><small>Dar seguimiento a este hallazgo</small></span><i/></label>}

@@ -1,0 +1,1 @@
+"use client";import {TowerProfile} from "@/components/towers/tower-profile";import {useParams} from "next/navigation";export default function Page(){const {towerId}=useParams<{towerId:string}>();return <TowerProfile id={towerId} role="supervisor"/>}

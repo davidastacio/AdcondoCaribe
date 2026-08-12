@@ -1,0 +1,2 @@
+import { AlertTriangle, Camera, CheckSquare2, LayoutDashboard } from "lucide-react";
+export function MobileInspectionNav({onFinish}:{onFinish:()=>void}){return <nav className="inspection-mobile-nav"><a href="#summary"><LayoutDashboard/>Resumen</a><a className="active" href="#checklist"><CheckSquare2/>Checklist</a><button onClick={onFinish}>Finalizar visita</button><a href="#incidents"><AlertTriangle/>Incidencias</a><a href="#photos"><Camera/>Fotos</a></nav>}
