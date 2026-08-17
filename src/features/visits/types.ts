@@ -51,6 +51,8 @@ export interface ChecklistSectionData {
 export interface InspectionAnswerData {
   condition: AnswerCondition;
   observation?: string;
+  responsible?: string;
+  materialNeeded?: string;
   priority?: Priority;
   createIncident?: boolean;
   photos?: string[];
