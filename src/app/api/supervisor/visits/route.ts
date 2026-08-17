@@ -1,0 +1,2 @@
+import {getServerSessionUser} from "@/lib/auth/server-session";import {fetchRealVisits} from "@/lib/visits/server";
+export const runtime="nodejs";export async function GET(){const user=await getServerSessionUser();if(!user||user.role==="ADMIN")return Response.json({error:"No autorizado."},{status:403});try{return Response.json({visits:await fetchRealVisits(user.id)})}catch{return Response.json({error:"No se pudieron consultar tus visitas."},{status:502})}}

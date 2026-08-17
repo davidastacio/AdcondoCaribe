@@ -21,6 +21,7 @@ export interface Visit {
   rescheduledTo?: string;
   estimatedDuration?: number;
   visitType?: string;
+  visitTypeId?: string;
   checklistTemplateId?: string;
   checklistTemplateName?: string;
   notes?: string;
@@ -32,7 +33,7 @@ export interface Visit {
 }
 export interface VisitScheduleHistory{id:string;visitId:string;previousDate?:string;previousTime?:string;newDate:string;newTime:string;reason:string;changedById:string;changedBy:string;createdAt:string}
 export interface VisitActivity{id:string;visitId:string;action:string;user:string;createdAt:string;detail?:string}
-export type VisitInput=Pick<Visit,"towerId"|"towerName"|"towerCode"|"sector"|"address"|"supervisorId"|"supervisor"|"scheduledDate"|"scheduledTime"|"estimatedDuration"|"visitType"|"checklistTemplateId"|"checklistTemplateName"|"notes"|"priority"|"recurrence">;
+export type VisitInput=Pick<Visit,"towerId"|"towerName"|"towerCode"|"sector"|"address"|"supervisorId"|"supervisor"|"scheduledDate"|"scheduledTime"|"estimatedDuration"|"visitType"|"visitTypeId"|"checklistTemplateId"|"checklistTemplateName"|"notes"|"priority"|"recurrence">;
 
 export interface ChecklistItemData {
   id: string;
