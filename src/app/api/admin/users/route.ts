@@ -12,7 +12,7 @@ const createSchema = z.object({
   temporaryPassword: z.string().min(6).max(128),
   phone: z.string().trim().max(40).optional(),
   jobTitle: z.string().trim().max(100).optional(),
-  role: z.enum(["ADMIN", "SUPERVISOR"]),
+  role: z.enum(["ADMIN", "SUPERVISOR", "INCIDENT_SUPERVISOR"]),
   status: z.enum(["PENDING", "ACTIVE", "INACTIVE", "SUSPENDED"]),
   notes: z.string().trim().max(1000).optional(),
 });

@@ -12,5 +12,7 @@ Orden:
 6. `006_rls.sql`: RLS y políticas de tablas.
 7. `007_storage.sql`: cinco buckets privados con límites y MIME aprobados; sin carga directa desde navegador.
 8. `008_seed_minimum.sql`: catálogos mínimos, sin usuarios ni datos operativos.
+9. `009_incident_supervisor_role.sql`: añade el rol diferenciado de supervisor de incidencias.
+10. `010_incident_supervisor_permissions.sql`: permite que ambos tipos de supervisor utilicen las políticas operativas existentes.
 
 Estado remoto verificado: 28 tablas con RLS activo/forzado, cinco buckets privados, catálogos mínimos y cero alertas del asesor de seguridad. La aplicación todavía no está conectada y no existe ningún usuario ADCONDO real.

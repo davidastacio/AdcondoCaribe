@@ -62,7 +62,7 @@ export function UserForm({
           <label>Teléfono<input value={data.phone ?? ""} onChange={(e) => set("phone", e.target.value)} /></label>
           <label>Cargo<input value={data.jobTitle ?? ""} onChange={(e) => set("jobTitle", e.target.value)} /></label>
           {!profile && <>
-            <label>Rol *<select value={data.role} onChange={(e) => set("role", e.target.value as AppRole)}><option value="ADMIN">Administrador</option><option value="SUPERVISOR">Supervisor</option></select></label>
+            <label>Rol *<select value={data.role} onChange={(e) => set("role", e.target.value as AppRole)}><option value="ADMIN">Administrador</option><option value="SUPERVISOR">Supervisor de visitas</option><option value="INCIDENT_SUPERVISOR">Supervisor de incidencias</option></select></label>
             <label>Estado<select value={data.status} onChange={(e) => set("status", e.target.value as UserStatus)}><option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option><option value="SUSPENDED">Suspendido</option><option value="PENDING">Pendiente</option></select></label>
           </>}
         </div>

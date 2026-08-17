@@ -8,7 +8,7 @@ export type DatabaseUserRow = {
   avatar_storage_key: string | null;
   job_title: string | null;
   notes: string | null;
-  role: "ADMIN" | "SUPERVISOR";
+  role: "ADMIN" | "SUPERVISOR" | "INCIDENT_SUPERVISOR";
   status: "PENDING" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
   last_login_at: string | null;
   created_at: string;
