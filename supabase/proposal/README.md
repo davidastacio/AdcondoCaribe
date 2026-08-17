@@ -14,5 +14,6 @@ Orden:
 8. `008_seed_minimum.sql`: catálogos mínimos, sin usuarios ni datos operativos.
 9. `009_incident_supervisor_role.sql`: añade el rol diferenciado de supervisor de incidencias.
 10. `010_incident_supervisor_permissions.sql`: permite que ambos tipos de supervisor utilicen las políticas operativas existentes.
+11. `011_assignment_schedules.sql`: admite ambos tipos de supervisor y registra días y horario de cada asignación.
 
 Estado remoto verificado: 28 tablas con RLS activo/forzado, cinco buckets privados, catálogos mínimos y cero alertas del asesor de seguridad. La aplicación todavía no está conectada y no existe ningún usuario ADCONDO real.

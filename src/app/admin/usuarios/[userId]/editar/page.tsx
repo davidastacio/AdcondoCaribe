@@ -1,6 +1,7 @@
 "use client";
 
 import { UserForm, type UserFormValue } from "@/components/users/user-form";
+import { AssignmentManager } from "@/components/users/assignment-manager";
 import type { AppUser } from "@/features/users/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -35,5 +36,10 @@ export default function EditUserPage() {
     router.refresh();
   }
 
-  return <><header className="module-heading compact"><div><Link className="back-link" href="/admin/usuarios"><ArrowLeft /> Usuarios</Link><h1>Editar usuario</h1></div></header>{error && <section className="card"><p className="form-error">{error}</p></section>}{!user && !error && <section className="card"><p>Cargando usuario…</p></section>}{user && <UserForm user={user} onSubmit={updateUser} />}</>;
+  return <>
+    <header className="module-heading compact"><div><Link className="back-link" href="/admin/usuarios"><ArrowLeft /> Usuarios</Link><h1>Editar usuario</h1></div></header>
+    {error && <section className="card"><p className="form-error">{error}</p></section>}
+    {!user && !error && <section className="card"><p>Cargando usuario…</p></section>}
+    {user && <><UserForm user={user} onSubmit={updateUser} />{user.role !== "ADMIN" && <AssignmentManager supervisorId={user.id} />}</>}
+  </>;
 }
