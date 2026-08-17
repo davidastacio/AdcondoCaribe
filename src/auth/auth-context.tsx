@@ -1,39 +1,80 @@
 "use client";
 
 import { permissionsForRole, type Permission } from "./permissions";
-import { getUser } from "@/features/users/service";
+import { getFirebaseClientAuth } from "@/lib/firebase/client";
 import type { AppRole, AppUser } from "@/features/users/types";
+import {
+  onIdTokenChanged,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+} from "firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-const SESSION_KEY = "adcondo:mock-session:v2";
-type StoredSession = { userId: string; role: AppRole };
-type AuthValue = { currentUser: AppUser | null; role: AppRole | null; permissions: Permission[]; isAuthenticated: boolean; isReady: boolean; signInMock: (role: AppRole) => void; signOut: () => void };
+type AuthValue = {
+  currentUser: AppUser | null;
+  role: AppRole | null;
+  permissions: Permission[];
+  isAuthenticated: boolean;
+  isReady: boolean;
+  signIn: (email: string, password: string) => Promise<AppUser>;
+  signOut: () => Promise<void>;
+};
+
 const AuthContext = createContext<AuthValue | null>(null);
 
-function readSession(): StoredSession | null {
-  if (typeof window === "undefined") return null;
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? "null") as StoredSession | null; } catch { return null; }
+async function openServerSession(idToken: string) {
+  const response = await fetch("/api/auth/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  const data = (await response.json()) as { user?: AppUser; error?: string };
+  if (!response.ok || !data.user) throw new Error(data.error ?? "Acceso no autorizado.");
+  return data.user;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<StoredSession | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [isReady, setReady] = useState(false);
-  useEffect(() => { setSession(readSession()); setReady(true); }, []);
-  const currentUser = session ? getUser(session.userId) : null;
+
+  useEffect(() => {
+    const auth = getFirebaseClientAuth();
+    return onIdTokenChanged(auth, async (firebaseUser) => {
+      try {
+        if (!firebaseUser) {
+          setCurrentUser(null);
+          return;
+        }
+        setCurrentUser(await openServerSession(await firebaseUser.getIdToken()));
+      } catch {
+        setCurrentUser(null);
+      } finally {
+        setReady(true);
+      }
+    });
+  }, []);
+
   const value = useMemo<AuthValue>(() => ({
     currentUser,
-    role: session?.role ?? null,
-    permissions: session ? permissionsForRole(session.role) : [],
-    isAuthenticated: Boolean(session && currentUser?.status === "ACTIVE"),
+    role: currentUser?.role ?? null,
+    permissions: currentUser ? permissionsForRole(currentUser.role) : [],
+    isAuthenticated: currentUser?.status === "ACTIVE",
     isReady,
-    signInMock(role) {
-      const next = { role, userId: role === "ADMIN" ? "usr-admin" : "usr-juan" };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(next));
-      localStorage.setItem("adcondo:current-role:v1", role);
-      setSession(next);
+    async signIn(email, password) {
+      const credential = await signInWithEmailAndPassword(getFirebaseClientAuth(), email, password);
+      const user = await openServerSession(await credential.user.getIdToken());
+      setCurrentUser(user);
+      return user;
     },
-    signOut() { localStorage.removeItem(SESSION_KEY); setSession(null); },
-  }), [currentUser, isReady, session]);
+    async signOut() {
+      await Promise.allSettled([
+        firebaseSignOut(getFirebaseClientAuth()),
+        fetch("/api/auth/session", { method: "DELETE" }),
+      ]);
+      setCurrentUser(null);
+    },
+  }), [currentUser, isReady]);
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
@@ -42,3 +83,4 @@ export function useAuth() {
   if (!value) throw new Error("useAuth debe utilizarse dentro de AuthProvider");
   return value;
 }
+

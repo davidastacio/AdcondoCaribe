@@ -1,13 +1,13 @@
 # ADCONDO DEL CARIBE — Estado técnico del proyecto
 
-Auditoría realizada el 12 de agosto de 2026. El proyecto es un MVP local visual y funcional. No utiliza Firebase, Supabase, Storage, Vercel ni autenticación real.
+Auditoría inicial realizada el 12 de agosto de 2026. Actualización de backend: 17 de agosto de 2026. El proyecto conserva el frontend MVP local y ya dispone de una base real en Supabase con las migraciones `001`–`008`, RLS forzado, Storage privado y catálogos mínimos. Firebase Email/Password, la sesión real del backend y el primer usuario ADMIN están operativos. La conexión de Vercel sigue pendiente.
 
 ## 1. Resumen ejecutivo
 
 - Estado general: MVP local avanzado, apto para validación funcional y visual, todavía no apto para producción.
 - Avance local estimado: 78%.
 - Páginas existentes: 46 (26 administrativas, 18 de supervisor y 2 públicas).
-- Persistencia: `localStorage` y datos semilla TypeScript.
+- Persistencia funcional actual: la identidad y el rol se resuelven con Firebase y Supabase; los módulos operativos todavía usan `localStorage` y datos semilla TypeScript.
 - Calidad: TypeScript estricto; build de Next.js funcional.
 - Riesgos principales: autorización no aplicada a rutas, datos duplicados, dashboards estáticos, ausencia de APIs/backend, archivos muy comprimidos y servicios que ocultan IDs inválidos usando registros fallback.
 
