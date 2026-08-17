@@ -37,6 +37,19 @@ export async function supabaseServerFetch(path: string, init?: RequestInit) {
   });
 }
 
+export async function supabaseStorageFetch(path: string, init?: RequestInit) {
+  const { url, secretKey } = getServerConfig();
+  return fetch(`${url}/storage/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: secretKey,
+      Authorization: `Bearer ${secretKey}`,
+      ...init?.headers,
+    },
+    cache: "no-store",
+  });
+}
+
 export async function findVerifiedAppUser(firebaseUid: string) {
   const params = new URLSearchParams({
     select:

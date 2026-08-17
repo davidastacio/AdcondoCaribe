@@ -55,7 +55,7 @@ export interface InspectionAnswerData {
   materialNeeded?: string;
   priority?: Priority;
   createIncident?: boolean;
-  photos?: string[];
+  photos?: { id: string; url: string }[];
   updatedAt: string;
 }
 

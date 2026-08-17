@@ -23,9 +23,13 @@ export async function GET(_: Request, { params }: Context) {
   const { visitId } = await params;
   const context = await inspectionContext(visitId, user.id);
   if (!context) return Response.json({ error: "Inspección no encontrada." }, { status: 404 });
-  const answerResponse = await supabaseServerFetch(`inspection_answers?select=item_id,condition,observation,responsible,material_needed,priority,updated_at&inspection_id=eq.${context.inspection.id}`);
-  const rows = answerResponse.ok ? await answerResponse.json() as { item_id: string; condition: string; observation: string|null; responsible: string|null; material_needed: string|null; priority: string|null; updated_at: string }[] : [];
-  return Response.json({ inspection: { id: context.inspection.id, startedAt: context.inspection.started_at, status: context.inspection.status, progress: context.inspection.progress, sections: context.inspection.template_snapshot.sections.map(section => ({ id: section.id, title: section.name, items: section.items.map(item => ({ id: item.id, title: item.name, instructions: item.description ?? "", required: item.required })) })), answers: Object.fromEntries(rows.map(row => [row.item_id, { condition: row.condition, observation: row.observation ?? undefined, responsible: row.responsible ?? undefined, materialNeeded: row.material_needed ?? undefined, priority: row.priority ?? undefined, updatedAt: row.updated_at }])) } });
+  const [answerResponse, photoResponse] = await Promise.all([
+    supabaseServerFetch(`inspection_answers?select=id,item_id,condition,observation,responsible,material_needed,priority,updated_at&inspection_id=eq.${context.inspection.id}`),
+    supabaseServerFetch(`inspection_photos?select=id,answer_id&inspection_id=eq.${context.inspection.id}&deleted_at=is.null`),
+  ]);
+  const rows = answerResponse.ok ? await answerResponse.json() as { id:string; item_id: string; condition: string; observation: string|null; responsible: string|null; material_needed: string|null; priority: string|null; updated_at: string }[] : [];
+  const photos = photoResponse.ok ? await photoResponse.json() as { id:string; answer_id:string|null }[] : [];
+  return Response.json({ inspection: { id: context.inspection.id, startedAt: context.inspection.started_at, status: context.inspection.status, progress: context.inspection.progress, sections: context.inspection.template_snapshot.sections.map(section => ({ id: section.id, title: section.name, items: section.items.map(item => ({ id: item.id, title: item.name, instructions: item.description ?? "", required: item.required })) })), answers: Object.fromEntries(rows.map(row => [row.item_id, { condition: row.condition, observation: row.observation ?? undefined, responsible: row.responsible ?? undefined, materialNeeded: row.material_needed ?? undefined, priority: row.priority ?? undefined, photos: photos.filter(photo=>photo.answer_id===row.id).map(photo=>({id:photo.id,url:`/api/supervisor/visits/${visitId}/inspection/photos/${photo.id}`})), updatedAt: row.updated_at }])) } });
 }
 
 export async function PATCH(request: Request, { params }: Context) {
