@@ -1,10 +1,11 @@
 import { findVerifiedAppUser } from "@/lib/database/verified-request";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/server-session";
+import { verifyFirebaseIdToken } from "@/lib/firebase/verify-token";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 
-const COOKIE_NAME = "adcondo_session";
 const bodySchema = z.object({ idToken: z.string().min(100) });
 
 function serializeUser(user: Awaited<ReturnType<typeof findVerifiedAppUser>>) {
@@ -26,37 +27,17 @@ function serializeUser(user: Awaited<ReturnType<typeof findVerifiedAppUser>>) {
   };
 }
 
-async function verifyToken(idToken: string) {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  if (!apiKey) throw new Error("Firebase no está configurado.");
-
-  const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ idToken }),
-      cache: "no-store",
-    },
-  );
-  if (!response.ok) throw new Error("Token de Firebase inválido.");
-  const payload = (await response.json()) as { users?: Array<{ localId: string }> };
-  const uid = payload.users?.[0]?.localId;
-  if (!uid) throw new Error("Firebase no devolvió una identidad.");
-  return { uid };
-}
-
 export async function POST(request: Request) {
   try {
     const { idToken } = bodySchema.parse(await request.json());
-    const decoded = await verifyToken(idToken);
+    const decoded = await verifyFirebaseIdToken(idToken);
     const user = await findVerifiedAppUser(decoded.uid);
     if (!user || user.status !== "ACTIVE") {
       return Response.json({ error: "Usuario no autorizado en ADCONDO." }, { status: 403 });
     }
 
     const cookieStore = await cookies();
-    cookieStore.set(COOKIE_NAME, idToken, {
+    cookieStore.set(SESSION_COOKIE_NAME, idToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -72,10 +53,10 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const idToken = cookieStore.get(COOKIE_NAME)?.value;
+    const idToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     if (!idToken) return Response.json({ user: null }, { status: 401 });
 
-    const decoded = await verifyToken(idToken);
+    const decoded = await verifyFirebaseIdToken(idToken);
     const user = await findVerifiedAppUser(decoded.uid);
     if (!user || user.status !== "ACTIVE") {
       return Response.json({ user: null }, { status: 403 });
@@ -88,6 +69,6 @@ export async function GET() {
 
 export async function DELETE() {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  cookieStore.delete(SESSION_COOKIE_NAME);
   return Response.json({ ok: true });
 }

@@ -12,4 +12,4 @@ export function RoleGuard({ allow, children }: { allow: AppRole[]; children: Rea
 }
 
 export const AdminRoute = ({ children }: { children: React.ReactNode }) => <RoleGuard allow={["ADMIN"]}>{children}</RoleGuard>;
-export const SupervisorRoute = ({ children }: { children: React.ReactNode }) => <RoleGuard allow={["ADMIN", "SUPERVISOR"]}>{children}</RoleGuard>;
+export const SupervisorRoute = ({ children }: { children: React.ReactNode }) => <RoleGuard allow={["SUPERVISOR"]}>{children}</RoleGuard>;
