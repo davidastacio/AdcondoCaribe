@@ -7,6 +7,7 @@ export type DatabaseUserRow = {
   phone: string | null;
   avatar_storage_key: string | null;
   job_title: string | null;
+  notes: string | null;
   role: "ADMIN" | "SUPERVISOR";
   status: "PENDING" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
   last_login_at: string | null;
@@ -23,21 +24,27 @@ function getServerConfig() {
   return { url: url.replace(/\/$/, ""), secretKey };
 }
 
-export async function findVerifiedAppUser(firebaseUid: string) {
+export async function supabaseServerFetch(path: string, init?: RequestInit) {
   const { url, secretKey } = getServerConfig();
-  const params = new URLSearchParams({
-    select:
-      "id,firebase_uid,email,first_name,last_name,phone,avatar_storage_key,job_title,role,status,last_login_at,created_at,updated_at",
-    firebase_uid: `eq.${firebaseUid}`,
-    limit: "1",
-  });
-  const response = await fetch(`${url}/rest/v1/users?${params}`, {
+  return fetch(`${url}/rest/v1/${path}`, {
+    ...init,
     headers: {
       apikey: secretKey,
       Authorization: `Bearer ${secretKey}`,
+      ...init?.headers,
     },
     cache: "no-store",
   });
+}
+
+export async function findVerifiedAppUser(firebaseUid: string) {
+  const params = new URLSearchParams({
+    select:
+      "id,firebase_uid,email,first_name,last_name,phone,avatar_storage_key,job_title,notes,role,status,last_login_at,created_at,updated_at",
+    firebase_uid: `eq.${firebaseUid}`,
+    limit: "1",
+  });
+  const response = await supabaseServerFetch(`users?${params}`);
   if (!response.ok) throw new Error("Supabase rechazó la consulta de identidad.");
   const rows = (await response.json()) as DatabaseUserRow[];
   return rows[0] ?? null;
