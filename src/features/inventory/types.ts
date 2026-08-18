@@ -2,7 +2,7 @@ export type InventoryCategory="CLEANING"|"HYGIENE"|"POOL"|"ELECTRICITY"|"MAINTEN
 export type InventoryStatus="AVAILABLE"|"LOW_STOCK"|"OUT_OF_STOCK"|"NOT_VERIFIED";
 export type MaterialRequestStatus="DRAFT"|"SUBMITTED"|"UNDER_REVIEW"|"APPROVED"|"REJECTED"|"PURCHASED"|"DELIVERED";
 export interface InventoryItem{id:string;name:string;category:InventoryCategory;defaultUnit:string;active:boolean}
-export interface InventoryPhoto{id:string;url:string;createdAt:string}
+export interface InventoryPhoto{id:string;url:string;createdAt:string;file?:File}
 export interface TowerInventory{id:string;towerId:string;towerName:string;towerCode:string;sector:string;inventoryItemId:string;itemName:string;category:InventoryCategory;quantity:number;recommendedQuantity:number;unit:string;status:InventoryStatus;location:string;observation?:string;photos:InventoryPhoto[];lastCheckedById?:string;lastCheckedBy?:string;lastCheckedAt?:string}
 export interface RequestItem{id:string;inventoryItemId:string;itemName:string;unit:string;currentQuantity:number;requestedQuantity:number;observation?:string;photos?:InventoryPhoto[]}
 export interface RequestUpdate{id:string;userId:string;userName:string;oldStatus?:MaterialRequestStatus;newStatus:MaterialRequestStatus;comment:string;createdAt:string}
