@@ -16,5 +16,6 @@ Orden:
 10. `010_incident_supervisor_permissions.sql`: permite que ambos tipos de supervisor utilicen las políticas operativas existentes.
 11. `011_assignment_schedules.sql`: admite ambos tipos de supervisor y registra días y horario de cada asignación.
 12. `012_seed_residential_checklist.sql`: carga la plantilla operativa de 8 secciones y 29 puntos basada en el Excel oficial.
+13. `013_seed_incident_catalogs.sql`: completa las áreas y categorías residenciales utilizadas por incidencias.
 
-Estado remoto verificado: 28 tablas con RLS activo/forzado, cinco buckets privados, catálogos mínimos y cero alertas del asesor de seguridad. La aplicación todavía no está conectada y no existe ningún usuario ADCONDO real.
+Estado remoto verificado: 28 tablas con RLS activo/forzado, cinco buckets privados y cero alertas del asesor de seguridad. La aplicación ya usa usuarios, torres, visitas, inspecciones e incidencias reales de forma progresiva.
