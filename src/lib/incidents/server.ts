@@ -10,7 +10,7 @@ type PhotoRow={id:string;incident_id:string;incident_update_id:string|null;type:
 
 const select="id,code,tower_id,visit_id,inspection_id,answer_id,reported_by_id,assigned_to_id,area_id,category_id,title,description,priority,status,resolved_at,closed_at,created_at,updated_at";
 export async function fetchRealIncidents(reportedById?:string){
-  const filter=reportedById?`&reported_by_id=eq.${encodeURIComponent(reportedById)}`:"";
+  const filter=reportedById?`&or=(reported_by_id.eq.${encodeURIComponent(reportedById)},assigned_to_id.eq.${encodeURIComponent(reportedById)})`:"";
   const [incidentResponse,towerResponse,userResponse,catalogResponse,updateResponse,photoResponse]=await Promise.all([
     supabaseServerFetch(`incidents?select=${select}${filter}&order=created_at.desc`),
     supabaseServerFetch("towers?select=id,name,code,address,sector"),
