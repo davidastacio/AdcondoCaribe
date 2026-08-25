@@ -1,4 +1,4 @@
-import { incidentLabels } from "@/features/incidents/service";
 import type { IncidentPriority, IncidentStatus } from "@/features/incidents/types";
+const incidentLabels={status:{OPEN:"Abierta",ASSIGNED:"Asignada",IN_PROGRESS:"En proceso",PENDING_VERIFICATION:"Pendiente de verificación",RESOLVED:"Resuelta",CLOSED:"Cerrada"} satisfies Record<IncidentStatus,string>,priority:{LOW:"Baja",MEDIUM:"Media",HIGH:"Alta",CRITICAL:"Crítica"} satisfies Record<IncidentPriority,string>};
 export function IncidentStatusBadge({status}:{status:IncidentStatus}){return <span className={`incident-badge incident-badge--status-${status.toLowerCase()}`}><i/>{incidentLabels.status[status]}</span>}
 export function IncidentPriorityBadge({priority}:{priority:IncidentPriority}){return <span className={`incident-badge incident-badge--priority-${priority.toLowerCase()}`}>{incidentLabels.priority[priority]}</span>}
