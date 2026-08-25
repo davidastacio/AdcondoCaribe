@@ -21,8 +21,8 @@ export default function LoginPage() {
     try {
       const user = await signIn(email.trim(), password);
       window.location.assign(user.role === "ADMIN" ? "/admin" : "/supervisor");
-    } catch {
-      setError("Correo, contraseña o permisos incorrectos.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Correo, contraseña o permisos incorrectos.");
     } finally {
       setLoading(false);
     }

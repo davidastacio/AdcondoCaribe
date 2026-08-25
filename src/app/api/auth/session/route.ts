@@ -28,9 +28,16 @@ function serializeUser(user: Awaited<ReturnType<typeof findVerifiedAppUser>>) {
 }
 
 export async function POST(request: Request) {
+  let decoded: Awaited<ReturnType<typeof verifyFirebaseIdToken>>;
+  let idToken: string;
   try {
-    const { idToken } = bodySchema.parse(await request.json());
-    const decoded = await verifyFirebaseIdToken(idToken);
+    ({ idToken } = bodySchema.parse(await request.json()));
+    decoded = await verifyFirebaseIdToken(idToken);
+  } catch {
+    return Response.json({ error: "Correo o contraseña incorrectos." }, { status: 401 });
+  }
+
+  try {
     const user = await findVerifiedAppUser(decoded.uid);
     if (!user || user.status !== "ACTIVE") {
       return Response.json({ error: "Usuario no autorizado en ADCONDO." }, { status: 403 });
@@ -45,8 +52,12 @@ export async function POST(request: Request) {
       maxAge: 55 * 60,
     });
     return Response.json({ user: serializeUser(user) });
-  } catch {
-    return Response.json({ error: "No se pudo validar la sesión." }, { status: 401 });
+  } catch (error) {
+    console.error("[auth/session] No se pudo consultar la identidad en Supabase.", error);
+    return Response.json(
+      { error: "El servicio de datos está iniciando. Intenta nuevamente en unos minutos." },
+      { status: 503 },
+    );
   }
 }
 
