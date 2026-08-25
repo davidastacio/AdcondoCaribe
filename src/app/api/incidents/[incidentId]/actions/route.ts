@@ -65,6 +65,7 @@ export async function POST(request:Request,{params}:Context){
       for(const file of files){const extension=mimeExtensions[file.type];if(!extension||file.size>10*1024*1024)continue;const storageKey=`${incident.tower_id}/${incident.id}/${randomUUID()}.${extension}`;const uploaded=await supabaseStorageFetch(`object/incident-photos/${storageKey}`,{method:"POST",headers:{"content-type":file.type,"x-upsert":"false"},body:await file.arrayBuffer()});if(uploaded.ok)await supabaseServerFetch("incident_photos",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({incident_id:incident.id,incident_update_id:updateId,storage_key:storageKey,type:"AFTER",uploaded_by_id:user.id})});}
     }
     await audit(request,user.id,incident,payload.action,{from_status:incident.status,to_status:newStatus??incident.status});
+    if(payload.action==="ASSIGN")await supabaseServerFetch("notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({user_id:payload.assignedToId,title:"Nueva incidencia asignada",body:`Se te asignó una incidencia con prioridad ${incident.priority}.`,entity_type:"incident",entity_id:incident.id})});
     return Response.json({ok:true});
   }catch(error){if(error instanceof z.ZodError)return Response.json({error:error.issues[0]?.message??"Revisa los datos."},{status:400});return Response.json({error:error instanceof Error?error.message:"No se pudo actualizar la incidencia."},{status:500});}
 }

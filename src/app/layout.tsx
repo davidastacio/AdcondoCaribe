@@ -8,6 +8,7 @@ import "./users.css";
 import "./scheduling.css";
 import "./reports.css";
 import "./visual-fixes.css";
+import "./final-modules.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/auth/auth-context";
 

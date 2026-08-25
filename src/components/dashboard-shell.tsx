@@ -5,7 +5,7 @@ import { Brand } from "./brand";
 import { Bell, Building2, CalendarDays, CheckSquare2, ChevronDown, ClipboardList, FileBarChart, FileText, Home, LogOut, Menu, Package, Settings, ShieldAlert, ShoppingCart, UserRound, UsersRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const supervisorItems = [
   ["Inicio", "/supervisor", Home], ["Mis visitas", "/supervisor/visitas", CalendarDays], ["Mis torres", "/supervisor/torres", Building2],
@@ -20,11 +20,18 @@ const adminItems = [
 
 export function DashboardShell({ role, children }: { role: "supervisor" | "admin"; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const pathname = usePathname();
   const { currentUser, signOut } = useAuth();
   const items = role === "supervisor" ? supervisorItems : adminItems;
   const person = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Usuario";
   const initials = currentUser ? `${currentUser.firstName[0]}${currentUser.lastName[0]}` : "--";
+  useEffect(()=>{
+    const refresh=()=>fetch("/api/notifications",{cache:"no-store"}).then(response=>response.ok?response.json():null).then((data:{unread?:number}|null)=>setUnread(data?.unread??0)).catch(()=>setUnread(0));
+    void refresh();
+    window.addEventListener("adcondo:notifications",refresh);
+    return()=>window.removeEventListener("adcondo:notifications",refresh);
+  },[pathname]);
   return <div className="app-shell">
     <aside className={`sidebar ${open ? "sidebar--open" : ""}`}>
       <div className="sidebar__head"><Brand light/><button onClick={() => setOpen(false)} className="sidebar__close" aria-label="Cerrar menú"><X/></button></div>
@@ -36,7 +43,7 @@ export function DashboardShell({ role, children }: { role: "supervisor" | "admin
       <header className="topbar">
         <button className="menu-button" onClick={() => setOpen(true)} aria-label="Abrir menú"><Menu/></button>
         <span className="topbar__title">{role === "supervisor" ? "Mi jornada" : "Panel administrativo"}</span>
-        <div className="topbar__actions"><Link href={role === "supervisor" ? "/supervisor" : "/admin"} className="notification" aria-label="Notificaciones"><Bell size={19}/><i>3</i></Link><div className="avatar">{initials}</div><div className="user"><strong>{person}</strong><small>{currentUser?.jobTitle ?? (role === "supervisor" ? "Supervisor" : "Administradora")}</small></div><ChevronDown size={16}/></div>
+        <div className="topbar__actions"><Link href={role === "supervisor" ? "/supervisor/notificaciones" : "/admin/notificaciones"} className="notification" aria-label={`${unread} notificaciones sin leer`}><Bell size={19}/>{unread>0&&<i>{unread>99?"99+":unread}</i>}</Link><div className="avatar">{initials}</div><div className="user"><strong>{person}</strong><small>{currentUser?.jobTitle ?? (role === "supervisor" ? "Supervisor" : "Administradora")}</small></div><ChevronDown size={16}/></div>
       </header>
       <main className="dashboard-content">{children}</main>
     </div>
