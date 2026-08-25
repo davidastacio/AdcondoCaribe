@@ -1,0 +1,9 @@
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { fetchChecklistTemplates } from "@/lib/checklists/server";
+import { supabaseServerFetch } from "@/lib/database/verified-request";
+import { z } from "zod";
+
+export const runtime = "nodejs";
+const schema = z.object({ name:z.string().trim().min(3).max(160), description:z.string().trim().max(1000).optional() });
+export async function GET(){if(!(await requireAdmin()))return Response.json({error:"No autorizado."},{status:403});try{return Response.json({templates:await fetchChecklistTemplates()});}catch{return Response.json({error:"No se pudieron cargar los checklists."},{status:502});}}
+export async function POST(request:Request){const actor=await requireAdmin();if(!actor)return Response.json({error:"No autorizado."},{status:403});try{const input=schema.parse(await request.json()),response=await supabaseServerFetch("checklist_templates",{method:"POST",headers:{"content-type":"application/json",Prefer:"return=representation"},body:JSON.stringify({name:input.name,description:input.description||null,version:1,active:true,created_by_id:actor.id})}),[row]=response.ok?await response.json() as {id:string}[]:[];if(!row)return Response.json({error:response.status===409?"Ya existe una plantilla con ese nombre y versión.":"No se pudo crear la plantilla."},{status:response.status===409?409:502});await supabaseServerFetch("activity_logs",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({actor_user_id:actor.id,action:"CHECKLIST_TEMPLATE_CREATED",entity_type:"checklist_template",entity_id:row.id,metadata:{name:input.name}})});return Response.json({id:row.id},{status:201});}catch(error){if(error instanceof z.ZodError)return Response.json({error:"Revisa los datos de la plantilla."},{status:400});return Response.json({error:"No se pudo crear la plantilla."},{status:500});}}
