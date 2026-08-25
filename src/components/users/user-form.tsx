@@ -52,7 +52,7 @@ export function UserForm({
       <section className="card user-form-main">
         <div className="avatar-upload">
           <span>{data.firstName[0] ?? "U"}{data.lastName[0] ?? ""}</span>
-          <label><Camera /> Foto<input type="file" accept="image/*" hidden /></label>
+          {!profile && <label><Camera /> Foto<input type="file" accept="image/*" hidden /></label>}
         </div>
         <div className="form-grid">
           <label>Nombre *<input required value={data.firstName} onChange={(e) => set("firstName", e.target.value)} /></label>
@@ -66,7 +66,7 @@ export function UserForm({
             <label>Estado<select value={data.status} onChange={(e) => set("status", e.target.value as UserStatus)}><option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option><option value="SUSPENDED">Suspendido</option><option value="PENDING">Pendiente</option></select></label>
           </>}
         </div>
-        <label>Notas<textarea rows={4} value={data.notes ?? ""} onChange={(e) => set("notes", e.target.value)} /></label>
+        {!profile && <label>Notas<textarea rows={4} value={data.notes ?? ""} onChange={(e) => set("notes", e.target.value)} /></label>}
         {!user && <p className="auth-future-note">La identidad se creará inmediatamente en Firebase y el acceso quedará controlado por el estado seleccionado.</p>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="btn btn--primary" disabled={saving}><Save /> {saving ? "Guardando…" : profile ? "Guardar perfil" : user ? "Guardar cambios" : "Crear usuario"}</button>

@@ -1,2 +1,8 @@
-"use client";import type {TowerDocument} from "@/features/towers/types";import {FileText,Upload} from "lucide-react";import {useState} from "react";
-export function TowerDocuments({documents}:{documents:TowerDocument[]}){const [items,setItems]=useState(documents);return <><div className="section-action"><h2>Documentos de la torre</h2><label className="btn btn--primary"><Upload/> Subir documento<input type="file" hidden onChange={e=>{const f=e.target.files?.[0];if(f)setItems(v=>[{id:crypto.randomUUID(),name:f.name,category:"Otros",date:new Date().toISOString(),uploadedBy:"María Fernández"},...v])}}/></label></div><div className="tower-documents">{items.map(d=><article key={d.id}><FileText/><div><b>{d.name}</b><small>{d.category} · {new Date(d.date).toLocaleDateString("es-DO")}</small></div><span>{d.uploadedBy}</span></article>)}</div></>}
+"use client";
+import type { AppDocument } from "@/features/reports/types";
+import { FileText, Upload } from "lucide-react";
+import Link from "next/link";
+
+export function TowerDocuments({ documents }: { documents: AppDocument[] }) {
+  return <><div className="section-action"><h2>Documentos de la torre</h2><Link className="btn btn--primary" href="/admin/documentos"><Upload /> Gestionar documentos</Link></div><div className="tower-documents">{documents.length ? documents.map((document) => <article key={document.id}><FileText /><div><b>{document.fileUrl ? <a href={document.fileUrl}>{document.name}</a> : document.name}</b><small>{document.category} · {new Date(document.documentDate).toLocaleDateString("es-DO")}</small></div><span>{document.uploadedBy}</span></article>) : <p>No hay documentos registrados para esta torre.</p>}</div></>;
+}
