@@ -1,0 +1,18 @@
+.btn--install{height:44px;border-color:#cfe0ff;background:#edf4ff;color:var(--blue)}
+.hero__actions{flex-wrap:wrap}
+.install-complete{display:inline-flex;align-items:center;gap:8px;color:var(--green);font-size:12px;font-weight:800}
+.install-complete svg{width:18px}
+.install-overlay{position:fixed;inset:0;z-index:100;background:rgba(3,20,39,.68);display:grid;place-items:center;padding:20px}
+.install-dialog{width:min(480px,100%);background:#fff;border-radius:20px;padding:32px;position:relative;box-shadow:0 30px 90px rgba(3,20,39,.3)}
+.install-dialog__close{position:absolute;right:16px;top:16px;border:0;background:#f1f5f9;border-radius:50%;width:36px;height:36px;display:grid;place-items:center;color:#52657e}
+.install-dialog__close svg{width:18px}
+.install-dialog__icon{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:#eaf2ff;color:var(--blue)}
+.install-dialog__icon svg{width:28px}
+.install-dialog h2{margin:18px 0 7px;font-size:25px}
+.install-dialog>p{color:var(--muted);line-height:1.6;font-size:13px}
+.install-dialog ol{padding-left:22px;color:#41546d;font-size:13px;line-height:1.6;margin:22px 0}
+.install-dialog li+li{margin-top:12px}
+.install-dialog li svg{width:16px;vertical-align:middle;color:var(--blue)}
+.install-dialog>.btn{width:100%}
+@media(max-width:800px){.install-dialog{padding:26px 22px}.hero__actions>.btn{width:100%}.install-dialog h2{font-size:22px}}
+

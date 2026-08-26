@@ -9,6 +9,7 @@ import "./scheduling.css";
 import "./reports.css";
 import "./visual-fixes.css";
 import "./final-modules.css";
+import "./install-app.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/auth/auth-context";
 import { PwaRegistration } from "@/components/offline/pwa-registration";
