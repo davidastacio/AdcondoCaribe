@@ -6,6 +6,7 @@ import { Bell, Building2, CalendarDays, CheckSquare2, ChevronDown, ClipboardList
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { OfflineManager } from "./offline/offline-manager";
 
 const supervisorItems = [
   ["Inicio", "/supervisor", Home], ["Mis visitas", "/supervisor/visitas", CalendarDays], ["Mis torres", "/supervisor/torres", Building2],
@@ -45,6 +46,7 @@ export function DashboardShell({ role, children }: { role: "supervisor" | "admin
         <span className="topbar__title">{role === "supervisor" ? "Mi jornada" : "Panel administrativo"}</span>
         <div className="topbar__actions"><Link href={role === "supervisor" ? "/supervisor/notificaciones" : "/admin/notificaciones"} className="notification" aria-label={`${unread} notificaciones sin leer`}><Bell size={19}/>{unread>0&&<i>{unread>99?"99+":unread}</i>}</Link><div className="avatar">{initials}</div><div className="user"><strong>{person}</strong><small>{currentUser?.jobTitle ?? (role === "supervisor" ? "Supervisor" : "Administradora")}</small></div><ChevronDown size={16}/></div>
       </header>
+      {role === "supervisor" && <OfflineManager/>}
       <main className="dashboard-content">{children}</main>
     </div>
   </div>;

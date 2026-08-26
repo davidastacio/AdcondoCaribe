@@ -6,6 +6,10 @@ import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Clock3, MapPin, Play,
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { ChecklistSectionData, InspectionAnswerData } from "@/features/visits/types";
+import { queueJsonRequest, readOfflineSnapshot, saveOfflineSnapshot } from "@/lib/offline/client";
+
+type PreparedInspection = { id: string; startedAt: string; status: string; progress: number; sections: ChecklistSectionData[]; answers: Record<string, InspectionAnswerData> };
 
 export default function StartVisitPage() {
   const { visitId } = useParams<{ visitId: string }>();
@@ -17,11 +21,16 @@ export default function StartVisitPage() {
   useEffect(() => {
     fetch(`/api/supervisor/visits/${visitId}`, { cache: "no-store" })
       .then(async (response) => {
-        const data = await response.json() as { visit?: Visit; error?: string };
+        const data = await response.json() as { visit?: Visit; preparedInspection?: PreparedInspection; error?: string };
         if (!response.ok || !data.visit) throw new Error(data.error ?? "No se pudo cargar la visita.");
         setVisit(data.visit);
+        await saveOfflineSnapshot(`visit:${visitId}`, data.visit);
+        if (data.preparedInspection) await saveOfflineSnapshot(`inspection:${visitId}`, data.preparedInspection);
       })
-      .catch((reason) => setError(reason instanceof Error ? reason.message : "No se pudo cargar la visita."));
+      .catch(async (reason) => {
+        const saved = await readOfflineSnapshot<Visit>(`visit:${visitId}`);
+        if (saved) setVisit(saved); else setError(reason instanceof Error ? reason.message : "No se pudo cargar la visita.");
+      });
   }, [visitId]);
 
   const start = async () => {
@@ -33,6 +42,18 @@ export default function StartVisitPage() {
     setLoading(true);
     setError("");
     try {
+      if (!navigator.onLine) {
+        const prepared = await readOfflineSnapshot<PreparedInspection>(`inspection:${visit.id}`);
+        if (!prepared) throw new Error("Abre esta visita una vez con internet para descargar su checklist antes de salir.");
+        const now = new Date().toISOString();
+        await Promise.all([
+          queueJsonRequest({ id: `start:${visit.id}`, url: `/api/supervisor/visits/${visit.id}`, method: "POST" }),
+          saveOfflineSnapshot(`visit:${visit.id}`, { ...visit, status: "IN_PROGRESS", startedAt: now }),
+          saveOfflineSnapshot(`inspection:${visit.id}`, { ...prepared, startedAt: now, status: "IN_PROGRESS" }),
+        ]);
+        router.push(`/supervisor/visitas/${visit.id}/inspeccion`);
+        return;
+      }
       const response = await fetch(`/api/supervisor/visits/${visit.id}`, { method: "POST" });
       const data = await response.json() as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "No se pudo iniciar la visita.");

@@ -11,6 +11,7 @@ import "./visual-fixes.css";
 import "./final-modules.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/auth/auth-context";
+import { PwaRegistration } from "@/components/offline/pwa-registration";
 
 export const metadata: Metadata = {
   title: "ADCONDO del Caribe",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" data-scroll-behavior="smooth">
-      <body><AuthProvider>{children}</AuthProvider></body>
+      <body><AuthProvider><PwaRegistration/>{children}</AuthProvider></body>
     </html>
   );
 }

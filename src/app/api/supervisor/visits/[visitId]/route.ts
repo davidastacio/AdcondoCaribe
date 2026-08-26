@@ -10,7 +10,27 @@ export async function GET(_: Request, { params }: Context) {
   if (!user || user.role === "ADMIN") return Response.json({ error: "No autorizado." }, { status: 403 });
   const { visitId } = await params;
   const visit = (await fetchRealVisits(user.id)).find(item => item.id === visitId);
-  return visit ? Response.json({ visit }) : Response.json({ error: "Visita no encontrada o no asignada." }, { status: 404 });
+  if (!visit) return Response.json({ error: "Visita no encontrada o no asignada." }, { status: 404 });
+  let preparedInspection: { id: string; startedAt: string; status: string; progress: number; sections: { id: string; title: string; items: { id: string; title: string; instructions: string; required: boolean }[] }[]; answers: Record<string, never> } | undefined;
+  if (["SCHEDULED", "RESCHEDULED"].includes(visit.status) && visit.checklistTemplateId) {
+    const [sectionsResponse, itemsResponse] = await Promise.all([
+      supabaseServerFetch(`checklist_sections?select=id,name,sort_order&template_id=eq.${visit.checklistTemplateId}&active=eq.true&order=sort_order.asc`),
+      supabaseServerFetch("checklist_items?select=id,section_id,name,description,required,sort_order&active=eq.true&order=sort_order.asc"),
+    ]);
+    if (sectionsResponse.ok && itemsResponse.ok) {
+      const sections = await sectionsResponse.json() as { id: string; name: string }[];
+      const items = await itemsResponse.json() as { id: string; section_id: string; name: string; description: string|null; required: boolean }[];
+      preparedInspection = {
+        id: `offline-${visit.id}`,
+        startedAt: "",
+        status: "PREPARED",
+        progress: 0,
+        sections: sections.map(section => ({ id: section.id, title: section.name, items: items.filter(item => item.section_id === section.id).map(item => ({ id: item.id, title: item.name, instructions: item.description ?? "", required: item.required })) })),
+        answers: {},
+      };
+    }
+  }
+  return Response.json({ visit, preparedInspection });
 }
 
 export async function POST(_: Request, { params }: Context) {
