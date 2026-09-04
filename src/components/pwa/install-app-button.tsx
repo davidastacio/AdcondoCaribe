@@ -46,11 +46,10 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
         <p>Funciona como una aplicación en tu móvil o tablet, sin descargarla desde una tienda.</p>
         <ol>
           <li><b>iPhone o iPad:</b> abre esta página en Safari, toca <Share/> <strong>Compartir</strong> y selecciona <strong>“Añadir a pantalla de inicio”</strong>.</li>
-          <li><b>Android:</b> abre el menú del navegador y selecciona <strong>“Instalar aplicación”</strong> o <strong>“Añadir a pantalla principal”</strong>.</li>
+          <li><b>Android:</b> abre esta página en <strong>Google Chrome</strong>, toca el menú de tres puntos y selecciona <strong>“Instalar aplicación”</strong>. Si todavía no aparece, actualiza la página una vez y vuelve a intentarlo.</li>
         </ol>
         <button type="button" className="btn btn--primary" onClick={() => setInstructionsOpen(false)}>Entendido</button>
       </section>
     </div>}
   </>;
 }
-

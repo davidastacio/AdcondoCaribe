@@ -17,6 +17,10 @@ import { PwaRegistration } from "@/components/offline/pwa-registration";
 export const metadata: Metadata = {
   title: "ADCONDO del Caribe",
   description: "Supervisión inteligente de torres residenciales",
+  applicationName: "ADCONDO DEL CARIBE",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "ADCONDO", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
