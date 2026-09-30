@@ -63,7 +63,7 @@ export default function InspectionPage() {
 
   const persistAnswer = async (itemId: string, answer: InspectionAnswerData) => {
     setSaveState("saving");
-    const body = { action: "ANSWER" as const, itemId, condition: answer.condition, observation: answer.observation, responsible: answer.responsible, materialNeeded: answer.materialNeeded, priority: answer.priority };
+    const body = { action: "ANSWER" as const, itemId, condition: answer.condition, observation: answer.observation, responsible: answer.responsible, materialNeeded: answer.materialNeeded, priority: answer.priority, createIncident: answer.createIncident };
     try {
       if (!navigator.onLine) throw new TypeError("Sin conexión");
       const response = await fetch(`/api/supervisor/visits/${visitId}/inspection`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -106,7 +106,7 @@ export default function InspectionPage() {
     try {
       if (!navigator.onLine) {
         for (const [itemId, answer] of Object.entries(inspection.answers)) {
-          await queueJsonRequest({ id: `answer:${visitId}:${itemId}`, url: `/api/supervisor/visits/${visitId}/inspection`, method: "PATCH", body: { action: "ANSWER", itemId, condition: answer.condition, observation: answer.observation, responsible: answer.responsible, materialNeeded: answer.materialNeeded, priority: answer.priority } });
+          await queueJsonRequest({ id: `answer:${visitId}:${itemId}`, url: `/api/supervisor/visits/${visitId}/inspection`, method: "PATCH", body: { action: "ANSWER", itemId, condition: answer.condition, observation: answer.observation, responsible: answer.responsible, materialNeeded: answer.materialNeeded, priority: answer.priority, createIncident: answer.createIncident } });
         }
         await queueJsonRequest({ id: `finish:${visitId}`, url: `/api/supervisor/visits/${visitId}/inspection`, method: "PATCH", body: { action: "FINISH" } });
         const finished = { ...inspection, status: "PENDING_SYNC", progress: 100 };

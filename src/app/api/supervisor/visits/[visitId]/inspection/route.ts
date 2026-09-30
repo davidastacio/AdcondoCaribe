@@ -1,10 +1,11 @@
 import { getServerSessionUser } from "@/lib/auth/server-session";
 import { supabaseServerFetch } from "@/lib/database/verified-request";
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
 type Context = { params: Promise<{ visitId: string }> };
-const answerSchema = z.object({ action: z.literal("ANSWER"), itemId: z.string().uuid(), condition: z.enum(["OPTIMAL","REGULAR","BAD","NOT_APPLICABLE"]), observation: z.string().trim().max(2000).optional(), responsible: z.string().trim().max(300).optional(), materialNeeded: z.string().trim().max(1000).optional(), priority: z.enum(["LOW","MEDIUM","HIGH","CRITICAL"]).optional() });
+const answerSchema = z.object({ action: z.literal("ANSWER"), itemId: z.string().uuid(), condition: z.enum(["OPTIMAL","REGULAR","BAD","NOT_APPLICABLE"]), observation: z.string().trim().max(2000).optional(), responsible: z.string().trim().max(300).optional(), materialNeeded: z.string().trim().max(1000).optional(), priority: z.enum(["LOW","MEDIUM","HIGH","CRITICAL"]).optional(), createIncident: z.boolean().optional() });
 const inputSchema = z.discriminatedUnion("action", [answerSchema, z.object({ action: z.literal("FINISH") })]);
 type Snapshot = { sections: { id: string; name: string; items: { id: string; name: string; description?: string; required: boolean }[] }[] };
 
@@ -23,13 +24,45 @@ export async function GET(_: Request, { params }: Context) {
   const { visitId } = await params;
   const context = await inspectionContext(visitId, user.id);
   if (!context) return Response.json({ error: "Inspección no encontrada." }, { status: 404 });
-  const [answerResponse, photoResponse] = await Promise.all([
+  const [answerResponse, photoResponse, incidentResponse] = await Promise.all([
     supabaseServerFetch(`inspection_answers?select=id,item_id,condition,observation,responsible,material_needed,priority,updated_at&inspection_id=eq.${context.inspection.id}`),
     supabaseServerFetch(`inspection_photos?select=id,answer_id&inspection_id=eq.${context.inspection.id}&deleted_at=is.null`),
+    supabaseServerFetch(`incidents?select=id,answer_id&inspection_id=eq.${context.inspection.id}`),
   ]);
   const rows = answerResponse.ok ? await answerResponse.json() as { id:string; item_id: string; condition: string; observation: string|null; responsible: string|null; material_needed: string|null; priority: string|null; updated_at: string }[] : [];
   const photos = photoResponse.ok ? await photoResponse.json() as { id:string; answer_id:string|null }[] : [];
-  return Response.json({ inspection: { id: context.inspection.id, startedAt: context.inspection.started_at, status: context.inspection.status, progress: context.inspection.progress, sections: context.inspection.template_snapshot.sections.map(section => ({ id: section.id, title: section.name, items: section.items.map(item => ({ id: item.id, title: item.name, instructions: item.description ?? "", required: item.required })) })), answers: Object.fromEntries(rows.map(row => [row.item_id, { condition: row.condition, observation: row.observation ?? undefined, responsible: row.responsible ?? undefined, materialNeeded: row.material_needed ?? undefined, priority: row.priority ?? undefined, photos: photos.filter(photo=>photo.answer_id===row.id).map(photo=>({id:photo.id,url:`/api/supervisor/visits/${visitId}/inspection/photos/${photo.id}`})), updatedAt: row.updated_at }])) } });
+  const incidentAnswerIds = new Set(incidentResponse.ok ? (await incidentResponse.json() as {id:string;answer_id:string|null}[]).map(row=>row.answer_id).filter(Boolean) : []);
+  return Response.json({ inspection: { id: context.inspection.id, startedAt: context.inspection.started_at, status: context.inspection.status, progress: context.inspection.progress, sections: context.inspection.template_snapshot.sections.map(section => ({ id: section.id, title: section.name, items: section.items.map(item => ({ id: item.id, title: item.name, instructions: item.description ?? "", required: item.required })) })), answers: Object.fromEntries(rows.map(row => [row.item_id, { condition: row.condition, observation: row.observation ?? undefined, responsible: row.responsible ?? undefined, materialNeeded: row.material_needed ?? undefined, priority: row.priority ?? undefined, createIncident: incidentAnswerIds.has(row.id), photos: photos.filter(photo=>photo.answer_id===row.id).map(photo=>({id:photo.id,url:`/api/supervisor/visits/${visitId}/inspection/photos/${photo.id}`})), updatedAt: row.updated_at }])) } });
+}
+
+async function createLinkedIncident(context: NonNullable<Awaited<ReturnType<typeof inspectionContext>>>, userId: string, input: z.infer<typeof answerSchema>, answerId: string, userAgent: string|null) {
+  if (!input.createIncident || !["REGULAR", "BAD"].includes(input.condition)) return undefined;
+  const existingResponse = await supabaseServerFetch(`incidents?select=id&answer_id=eq.${answerId}&limit=1`);
+  const [existing] = existingResponse.ok ? await existingResponse.json() as {id:string}[] : [];
+  if (existing) return existing.id;
+  const section = context.inspection.template_snapshot.sections.find(entry => entry.items.some(item => item.id === input.itemId));
+  const item = section?.items.find(entry => entry.id === input.itemId);
+  const catalogsResponse = await supabaseServerFetch("catalog_items?select=id,catalog_type,code,label&catalog_type=in.(INCIDENT_AREA,INCIDENT_CATEGORY)&active=eq.true&order=sort_order.asc");
+  if (!catalogsResponse.ok) throw new Error("No se pudieron cargar los catálogos de incidencias.");
+  const catalogs = await catalogsResponse.json() as {id:string;catalog_type:string;code:string;label:string}[];
+  const normalize = (value:string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const areas = catalogs.filter(row => row.catalog_type === "INCIDENT_AREA");
+  const categories = catalogs.filter(row => row.catalog_type === "INCIDENT_CATEGORY");
+  const area = areas.find(row => section && (normalize(row.label).includes(normalize(section.name)) || normalize(section.name).includes(normalize(row.label)))) ?? areas.find(row => row.code === "OTHER") ?? areas[0];
+  const category = categories.find(row => row.code === "GENERAL") ?? categories.find(row => row.code === "OTHER") ?? categories[0];
+  if (!area || !category) throw new Error("Faltan catálogos para registrar la incidencia.");
+  const code=`INC-${new Date().toISOString().slice(0,10).replaceAll("-","")}-${randomBytes(2).toString("hex").toUpperCase()}`;
+  const incidentResponse = await supabaseServerFetch("incidents", {method:"POST",headers:{"content-type":"application/json",Prefer:"return=representation"},body:JSON.stringify({code,tower_id:context.visit.tower_id,visit_id:context.visit.id,inspection_id:context.inspection.id,answer_id:answerId,reported_by_id:userId,area_id:area.id,category_id:category.id,title:item?.name ?? "Hallazgo de inspección",description:input.observation || `Hallazgo marcado como ${input.condition === "BAD" ? "Mal" : "Regular"}.`,priority:input.priority ?? (input.condition === "BAD" ? "HIGH" : "MEDIUM"),status:"OPEN"})});
+  const [incident] = incidentResponse.ok ? await incidentResponse.json() as {id:string}[] : [];
+  if (!incident) {
+    console.error("[inspection] linked incident insert failed", {visitId:context.visit.id, inspectionId:context.inspection.id, answerId, status:incidentResponse.status});
+    throw new Error("No se pudo registrar la incidencia vinculada.");
+  }
+  await Promise.all([
+    supabaseServerFetch("incident_updates",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({incident_id:incident.id,user_id:userId,type:"CREATED",comment:"Incidencia creada desde el checklist.",is_internal:false})}),
+    supabaseServerFetch("activity_logs",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({actor_user_id:userId,tower_id:context.visit.tower_id,action:"INCIDENT_CREATED",entity_type:"incident",entity_id:incident.id,metadata:{code,visit_id:context.visit.id,answer_id:answerId},user_agent:userAgent})}),
+  ]);
+  return incident.id;
 }
 
 export async function PATCH(request: Request, { params }: Context) {
@@ -43,14 +76,17 @@ export async function PATCH(request: Request, { params }: Context) {
     if (input.action === "ANSWER") {
       const valid = context.inspection.template_snapshot.sections.some(section => section.items.some(item => item.id === input.itemId));
       if (!valid) return Response.json({ error: "Punto de checklist inválido." }, { status: 400 });
-      const response = await supabaseServerFetch("inspection_answers?on_conflict=inspection_id,item_id", { method: "POST", headers: { "content-type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ inspection_id: context.inspection.id, item_id: input.itemId, condition: input.condition, observation: input.observation || null, responsible: input.responsible || null, material_needed: input.materialNeeded || null, priority: input.priority || null }) });
+      const response = await supabaseServerFetch("inspection_answers?on_conflict=inspection_id,item_id", { method: "POST", headers: { "content-type": "application/json", Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ inspection_id: context.inspection.id, item_id: input.itemId, condition: input.condition, observation: input.observation || null, responsible: input.responsible || null, material_needed: input.materialNeeded || null, priority: input.priority || null }) });
       if (!response.ok) return Response.json({ error: "No se pudo guardar la respuesta." }, { status: 502 });
+      const [savedAnswer] = await response.json() as {id:string}[];
+      if (!savedAnswer) return Response.json({ error: "No se pudo confirmar la respuesta guardada." }, { status: 502 });
+      const incidentId = await createLinkedIncident(context, user.id, input, savedAnswer.id, request.headers.get("user-agent"));
       const countResponse = await supabaseServerFetch(`inspection_answers?select=id&inspection_id=eq.${context.inspection.id}`);
       const count = countResponse.ok ? (await countResponse.json() as unknown[]).length : 0;
       const total = context.inspection.template_snapshot.sections.reduce((sum, section) => sum + section.items.length, 0);
       const progress = Math.round(count / Math.max(total, 1) * 100);
       await supabaseServerFetch(`inspections?id=eq.${context.inspection.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ progress }) });
-      return Response.json({ success: true, progress });
+      return Response.json({ success: true, progress, incidentId });
     }
 
     const required = context.inspection.template_snapshot.sections.flatMap(section => section.items).filter(item => item.required);
@@ -64,6 +100,7 @@ export async function PATCH(request: Request, { params }: Context) {
     const visitUpdate = await supabaseServerFetch(`visits?id=eq.${visitId}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "COMPLETED", completed_at: now, completed_by_id: user.id, updated_by_id: user.id }) });
     return inspectionUpdate.ok && visitUpdate.ok ? Response.json({ success: true }) : Response.json({ error: "No se pudo finalizar la visita." }, { status: 502 });
   } catch (error) {
+    console.error("[inspection] update failed", {error:error instanceof Error?error.message:String(error)});
     if (error instanceof z.ZodError) return Response.json({ error: error.issues[0]?.message ?? "Revisa la respuesta." }, { status: 400 });
     return Response.json({ error: "No se pudo actualizar la inspección." }, { status: 500 });
   }
